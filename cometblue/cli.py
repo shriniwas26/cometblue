@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-
 import datetime
 import functools
 import itertools
@@ -107,14 +105,14 @@ class _HumanReadableFormatter(object):
         self._print_simple('%02u:%02u' % (value['preload'], value['current']))
 
     def print_days(self, value):
-        table = zip(
+        table = list(zip(
                 itertools.count(1),
-                map(lambda s: s[0].upper() + s[1:], _WEEK_DAYS),
-                *zip(*[[('' if period['start'] is None
+                [s[0].upper() + s[1:] for s in _WEEK_DAYS],
+                *list(zip(*[[('' if period['start'] is None
                          else '%s - %s' % (period['start'].isoformat(),
                                            period['end'].isoformat()))
                         for period in day]
-                       for day in value]))
+                       for day in value]))))
         self._print_simple(
                 tabulate.tabulate(
                         table,
@@ -123,13 +121,13 @@ class _HumanReadableFormatter(object):
                         tablefmt='psql'))
 
     def print_holidays(self, value):
-        table = zip(
+        table = list(zip(
                 itertools.count(1),
-                *zip(*[(('', '', '') if holiday['start'] is None
+                *list(zip(*[(('', '', '') if holiday['start'] is None
                         else (holiday['start'].isoformat(' '),
                               holiday['end'].isoformat(' '),
                               '%.01f' % holiday['temp']))
-                       for holiday in value]))
+                       for holiday in value]))))
         self._print_simple(
                 tabulate.tabulate(
                         table,
@@ -321,8 +319,7 @@ def _device_set_day(ctx, day, period):
 
     periods = []
     for one_period in period:
-        str_start, str_end = tuple(map(lambda s: s.strip(),
-                                       one_period.split('-')))
+        str_start, str_end = tuple([s.strip() for s in one_period.split('-')])
 
         if str_start:
             start = _parse_time(str_start)
@@ -366,7 +363,7 @@ def _device_set_day(ctx, day, period):
 def _device_set_holiday(ctx, holiday, start, end, temperature):
     holiday_index = int(holiday) - 1
 
-    if any(map(lambda v: v is None, (start, end, temperature))):
+    if any([v is None for v in (start, end, temperature)]):
         start = None
         end = None
         temperature = None
@@ -588,7 +585,7 @@ class _SetterFunctions(object):
                 'window_open_detection': window_open_detect,
                 'window_open_minutes': window_open_minutes,
             }
-            if all(map(lambda v: v is None, six.itervalues(temps))):
+            if all([v is None for v in six.itervalues(temps)]):
                 raise RuntimeError(
                         'No new values to set, try "temperatures -h"')
             real_setter(ctx, temps)

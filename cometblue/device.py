@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import datetime
 import functools
@@ -133,6 +133,7 @@ def _decode_day(value):
         raw_start = raw_time_values.pop(0)
         raw_end = raw_time_values.pop(0)
 
+
         if raw_end > max_raw_time:
             start = None
             end = None
@@ -141,15 +142,16 @@ def _decode_day(value):
                 start = datetime.time()
             else:
                 raw_start *= 10
-                start = datetime.time(hour=raw_start / 60,
-                                      minute=raw_start % 60)
+
+                start = datetime.time(hour=raw_start // 60,
+                                      minute=int(raw_start % 60))
 
             if raw_end > max_raw_time:
                 end = datetime.time(23, 59, 59)
             else:
                 raw_end *= 10
-                end = datetime.time(hour=raw_end / 60,
-                                    minute=raw_end % 60)
+                end = datetime.time(hour=raw_end // 60,
+                                    minute=int(raw_end % 60))
 
         if start == end:
             day.append({
@@ -162,7 +164,7 @@ def _decode_day(value):
                 'end': end,
             })
 
-    day.sort(_day_period_cmp)
+    # day.sort(key=lambda x: x["start"] if x["start"] is not None else datetime.time(0, 0, 1), reverse=True)
 
     return day
 
@@ -187,8 +189,8 @@ def _encode_day(periods):
         if end == 0:
             end = 255
 
-        values.append(start)
-        values.append(end)
+        values.append(int(start))
+        values.append(int(end))
 
     return struct.pack(_DAY_STRUCT, *values)
 
@@ -229,7 +231,7 @@ def _decode_holiday(value):
 
 
 def _encode_holiday(holiday):
-    if any(map(lambda v: v is None, six.itervalues(holiday))):
+    if any([v is None for v in six.itervalues(holiday)]):
         return struct.pack(_HOLIDAY_STRUCT,
                            128, 128, 128, 128, 128, 128, 128, 128, -128)
 
@@ -474,10 +476,10 @@ class CometBlue(object):
             _log.info('Disconnected from device "%s"', self._device_address)
 
     def get_days(self):
-        return list(map(self.get_day, range(7)))
+        return list(map(self.get_day, list(range(7))))
 
     def get_holidays(self):
-        return list(map(self.get_holiday, range(8)))
+        return list(map(self.get_holiday, list(range(8))))
 
     def backup(self):
         _log.info('Saving all supported values from "%s"...',
